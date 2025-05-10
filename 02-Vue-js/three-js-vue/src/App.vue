@@ -1,117 +1,80 @@
 <script setup>
-  import * as THREE from 'three';
-  import { onMounted, ref } from 'vue';
-  import { AsciiEffect } from 'three/examples/jsm/effects/AsciiEffect.js';
+import * as THREE from 'three';
+import { onMounted, onUnmounted, ref } from 'vue';
+import { AsciiEffect } from 'three/examples/jsm/effects/AsciiEffect.js';
 
+const container = ref(null); // 挂载 DOM 的 ref
 
-  const container = ref(null); // 用于挂载 ASCII 效果的 DOM 元素
+let effect, renderer, camera, scene, cube, animationId;
 
-  onMounted(() => {
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(
-        45,
-        window.innerWidth / window.innerHeight,
-        0.1,
-        1000
-    );
+function initScene() {
+  // 场景
+  scene = new THREE.Scene();
 
+  // 相机
+  camera = new THREE.PerspectiveCamera(
+    45,
+    window.innerWidth / window.innerHeight,
+    0.1,
+    1000
+  );
+  camera.position.z = 5;
+  camera.lookAt(0, 0, 0);
 
-    const renderer = new THREE.WebGLRenderer();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    // document.body.appendChild(renderer.domElement);
+  // 渲染器
+  renderer = new THREE.WebGLRenderer();
+  renderer.setSize(window.innerWidth, window.innerHeight);
 
-    const effect = new AsciiEffect(renderer, ' .:-+*=%@#', { invert:true });
-    effect.setSize(window.innerWidth, window.innerHeight);
-    effect.domElement.style.color = 'white';
-    effect.domElement.style.backgroundColor = 'black';
-    container.value.appendChild(effect.domElement);  // 挂载在页面上
+  // ASCII 效果器
+  effect = new AsciiEffect(renderer, ' .:-+*=%@#', { invert: true });
+  effect.setSize(window.innerWidth, window.innerHeight);
+  effect.domElement.style.color = 'white';
+  effect.domElement.style.backgroundColor = 'black';
 
-    const geometry = new THREE.BoxGeometry(1, 1, 1);
-    const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-    const cube = new THREE.Mesh(geometry, material);
+  // 附加到容器
+  if (container.value) {
+    container.value.innerHTML = ''; // 清空旧内容（防止重复挂载）
+    container.value.appendChild(effect.domElement);
+  }
 
-    scene.add(cube);
+  // 几何体
+  const geometry = new THREE.BoxGeometry(1, 1, 1);
+  const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+  cube = new THREE.Mesh(geometry, material);
+  scene.add(cube);
+}
 
-    camera.position.z = 5;
-    camera.lookAt(0, 0, 0);
+function animate() {
+  animationId = requestAnimationFrame(animate);
+  cube.rotation.x += 0.01;
+  cube.rotation.y += 0.01;
+  effect.render(scene, camera);
+}
 
-    window.addEventListener('resize', () => {
-      const width = window.innerWidth;
-      const height = window.innerHeight;
+function handleResize() {
+  const width = window.innerWidth;
+  const height = window.innerHeight;
+  camera.aspect = width / height;
+  camera.updateProjectionMatrix();
+  renderer.setSize(width, height);
+  effect.setSize(width, height);
+}
 
-      camera.aspect = width / height;
-      camera.updateProjectionMatrix();
+onMounted(() => {
+  initScene();
+  animate();
+  window.addEventListener('resize', handleResize);
+});
 
-      renderer.setSize(width, height);
-      effect.setSize(width, height);
-    });
-
-
-    function animate() {
-        requestAnimationFrame(animate);
-        cube.rotation.x += 0.01;
-        cube.rotation.y += 0.01;
-        effect.render(scene, camera);
-    };
-
-    animate();
-
-  })
+onUnmounted(() => {
+  // 清除动画帧和事件监听
+  cancelAnimationFrame(animationId);
+  window.removeEventListener('resize', handleResize);
+});
 </script>
 
 <template>
-  <div>
-      <!-- 一定要绑定 ref -->
-  <div ref="container" class="ascii-container"></div>
-  </div>
+  <div class="ascii-container" ref="container"></div>
 </template>
 
-<style>
-  *{
-    margin: 0;
-    padding: 0;
-  }
 
-  canvas{
-    display: block;
-    position: fixed;
-    left: 0;
-    top: 0;
-    width: 100vw;
-    height: 100vh;
-  }
-
-  .ascii-container pre {
-    font-family: monospace;
-    font-size: 8px;
-    line-height: 1em;
-    white-space: pre; /* 保留换行和空格 */
-    margin: 0;
-    padding: 0;
-
-    /* 限制尺寸 + 居中显示 */
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-    position: absolute;
-    top: 0;
-    left: 0;
-
-    /* 禁止内容撑开布局 */
-    display: block;
-    box-sizing: border-box;
-  }
-
-  .ascii-container {
-    width: 100vw;
-    height: 100vh;
-    overflow: hidden;
-    position: relative;
-  }
-
-  html, body, #app {
-    width: 100%;
-    height: 100%;
-  }
-
-</style>
