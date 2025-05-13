@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { AsciiEffect } from 'three/examples/jsm/effects/AsciiEffect.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 function CubeCanvas() {
   const containerRef = useRef(null);
@@ -18,8 +19,15 @@ function CubeCanvas() {
     camera.position.z = 5;
     camera.lookAt(0, 0, 0);
 
+    // 添加世界坐标辅助器
+    const axesHelper = new THREE.AxesHelper(10);
+    scene.add (axesHelper);
+
     const renderer = new THREE.WebGLRenderer();
     renderer.setSize(window.innerWidth, window.innerHeight);
+
+    // 控制器添加,然后再animate函数中追加update
+    const controls = new OrbitControls( camera, renderer.domElement );
 
     const effect = new AsciiEffect(renderer, ' .:-+*=%@#', { invert: true });
     effect.setSize(window.innerWidth, window.innerHeight);
@@ -45,6 +53,7 @@ function CubeCanvas() {
 
 
     const animate = () => {
+      controls.update();
       animationRef.current = requestAnimationFrame(animate);
       cube.rotation.x += 0.01;
       cube.rotation.y += 0.01;
