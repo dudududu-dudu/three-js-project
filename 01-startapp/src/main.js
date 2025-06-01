@@ -3,6 +3,7 @@ import './style.css';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 // import { contain } from 'three/src/extras/TextureUtils.js';
+import {GUI} from 'three/examples/jsm/libs/lil-gui.module.min.js';
 
 const scene = new THREE.Scene();
 
@@ -40,6 +41,7 @@ const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
 
 // 创建一个父元素的cube(层级测试)
 const parentMaterial = new THREE.MeshBasicMaterial({ color: 0xa0522d });
+parentMaterial.wireframe = true;
 let parentCube = new THREE.Mesh(geometry, parentMaterial);
 // 根据前面设置的几何体和材质创建Mesh
 const cube = new THREE.Mesh(geometry, material);
@@ -89,34 +91,74 @@ window.addEventListener('resize', ()=>{
     camera.updateProjectionMatrix();
 });
 
-// 监听按钮
-let btn = document.createElement('button');
-btn.innerHTML = 'click to full screen';
-btn.style.position = 'absolute';
-btn.style.top = '10px';
-btn.style.left = '10px';
-btn.style.zIndex = '999';
-btn.addEventListener('click', (e) => {
-    e.stopPropagation(); // 阻止事件冒泡给 OrbitControls
-    e.preventDefault();
-    document.body.requestFullscreen();  // 整个屏幕的追加事件
-    // renderer.domElement.requestFullscreen();  // 画布追加事件
-    console.log('full screen clicked');
-});
-document.body.appendChild(btn);
+// // 监听按钮
+// let btn = document.createElement('button');
+// btn.innerHTML = 'click to full screen';
+// btn.style.position = 'absolute';
+// btn.style.top = '10px';
+// btn.style.left = '10px';
+// btn.style.zIndex = '999';
+// btn.addEventListener('click', (e) => {
+//     e.stopPropagation(); // 阻止事件冒泡给 OrbitControls
+//     e.preventDefault();
+//     document.body.requestFullscreen();  // 整个屏幕的追加事件
+//     // renderer.domElement.requestFullscreen();  // 画布追加事件
+//     console.log('full screen clicked');
+// });
+// document.body.appendChild(btn);
 
 
-let exitBtn = document.createElement('button');
-exitBtn.innerHTML = 'click to exit full screen';
-exitBtn.style.position = 'absolute';
-exitBtn.style.top = '10px';
-exitBtn.style.left = '300px';
-exitBtn.style.zIndex = '999';
-exitBtn.addEventListener('click', (e) => {
-    e.stopPropagation(); // 阻止事件冒泡给 OrbitControls
-    e.preventDefault();
-    document.exitFullscreen();  // body追加事件
-    // renderer.domElement.exitFullscreen();  // 画布追加事件
-    console.log('exit full screen');
-});
-document.body.appendChild(exitBtn);
+// let exitBtn = document.createElement('button');
+// exitBtn.innerHTML = 'click to exit full screen';
+// exitBtn.style.position = 'absolute';
+// exitBtn.style.top = '10px';
+// exitBtn.style.left = '300px';
+// exitBtn.style.zIndex = '999';
+// exitBtn.addEventListener('click', (e) => {
+//     e.stopPropagation(); // 阻止事件冒泡给 OrbitControls
+//     e.preventDefault();
+//     document.exitFullscreen();  // body追加事件
+//     // renderer.domElement.exitFullscreen();  // 画布追加事件
+//     console.log('exit full screen');
+// });
+// document.body.appendChild(exitBtn);
+
+let eventObj = {
+    fullScreen: function() {
+        document.body.requestFullscreen();  // 整个屏幕的追加事件
+        // renderer.domElement.requestFullscreen();  // 画布追加事件
+        console.log('full screen clicked');
+    },
+    exitFullScreen: function() {
+        document.exitFullscreen();  // body追加事件
+        // renderer.domElement.exitFullscreen();  // 画布追加事件
+        console.log('exit full screen');
+    }
+};
+
+// 创建一个GUI
+const gui = new GUI();
+// 添加按钮
+gui.add(eventObj, 'fullScreen').name('全屏');
+gui.add(eventObj, 'exitFullScreen').name('退出全屏');
+
+// 控制立方体的位置
+// gui.add(cube.position, 'x', -5, 5).name('立方体x轴位置');
+
+// 创建一个管理folder
+let folder = gui.addFolder('立方体位置管理');
+folder.add(cube.position, 'x').min(-10).max(10).step(1).name('立方体x轴位置').onChange((val) => {
+    console.log('立方体x轴位置',val);
+});  // 调整x轴上位置,最小值-10,最大值10,每一次只滑动1
+folder.add(cube.position, 'y').min(-10).max(10).step(1).name('立方体y轴位置');
+folder.add(cube.position, 'z').min(-10).max(10).step(1).name('立方体z轴位置');
+
+gui.add(parentMaterial, 'wireframe').name('父元素线框材质');
+gui.add(material, 'wireframe').name('子元素线框材质');
+
+let colorParms = {
+    cubeColor: '#ff000',
+};
+gui.addColor(colorParms, 'cubeColor').name('立方体颜色').onChange((val => {
+    cube.material.color.set(val);
+}));
