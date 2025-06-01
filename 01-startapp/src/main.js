@@ -21,8 +21,6 @@ scene.add (axesHelper);
 const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 
-// document.body.appendChild(renderer.domElement);
-// 显式的去添加canvas到canvas-container中,而不是直接添加在body最后
 const container = document.getElementById('canvas-container');
 container.appendChild(renderer.domElement);
 
@@ -36,34 +34,71 @@ controls.dampingFactor = 0.1;
 // 设置旋转速度(自动旋转)
 controls.autoRotate = true;
 
-const geometry = new THREE.BoxGeometry(1, 1, 1);
-const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+// create geometry, use meta obj(BufferGeometry)
+const geometry = new THREE.BufferGeometry();
+const vertices = new Float32Array([
+    -1.0, -1.0, 0.0, 1.0, -1.0, 0.0, 1.0, 1.0, 0.0, -1.0, 1.0, 0,
+]);
 
-// 创建一个父元素的cube(层级测试)
-const parentMaterial = new THREE.MeshBasicMaterial({ color: 0xa0522d });
-parentMaterial.wireframe = true;
-let parentCube = new THREE.Mesh(geometry, parentMaterial);
-// 根据前面设置的几何体和材质创建Mesh
-const cube = new THREE.Mesh(geometry, material);
+// create verties attribution
+geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
 
-// 设置Mesh的放大, 同样的父元素的属性改变会传递给子元素
-cube.scale.set(2, 2, 2);
-// parentCube.scale.set(3,2,7);
+// add indices
+const indices = new Uint16Array([0, 1, 2, 2, 3, 0]);
+geometry.setIndex(new THREE.BufferAttribute(indices, 1));
 
-parentCube.add(cube);
-parentCube.position.set(-3, 0, 0)
-// 绕x轴旋转45度
-parentCube.rotation.x = Math.PI / 4;
+// set 2 verties group, create 2 metrial
+geometry.addGroup(0,3,0);
+geometry.addGroup(3,3,1);
 
-// 设置位移
-// cube.position.x = 2;
-// 或者使用position的set, 由于父元素传递了位置,因此子元素cube的位置是父元素的相对位置, 也就是父元素的平移三格
-cube.position.set(3, 0, 0);
-// 叠加父元素的45度
-cube.rotation.x = Math.PI/4;
+// create material
+const material = new THREE.MeshBasicMaterial({
+    color: 0x662eff,
+    side: THREE.DoubleSide,
+    wireframe: true
+});
 
-scene.add(parentCube);
-// scene.add(cube);  // 如果添加了父对象,就不需要再次添加子对象作为scene的子对象
+const material1 = new THREE.MeshBasicMaterial({
+    color: 0xff0000
+});
+
+// create a cube and give every plane different colors
+const cubeGeometry = new THREE.BoxGeometry(1,1,1);
+
+const cubeMaterial0 = new THREE.MeshBasicMaterial({
+    color: 0x662eff
+});
+const cubeMaterial1 = new THREE.MeshBasicMaterial({
+    color: 0x00ff00
+});
+const cubeMaterial2 = new THREE.MeshBasicMaterial({
+    color: 0x0000ff
+});
+const cubeMaterial3 = new THREE.MeshBasicMaterial({
+    color: 0xffff00
+});
+const cubeMaterial4 = new THREE.MeshBasicMaterial({
+    color: 0x00ffff
+});
+const cubeMaterial5 = new THREE.MeshBasicMaterial({
+    color: 0xff00ff
+});
+
+const cube = new THREE.Mesh(cubeGeometry, [
+    cubeMaterial0,
+    cubeMaterial1,
+    cubeMaterial2,
+    cubeMaterial3,
+    cubeMaterial4,
+    cubeMaterial5,
+]);
+cube.position.x = 2;
+scene.add(cube);
+
+// set everything into Mesh
+const plane = new THREE.Mesh(geometry,[material, material1]);
+scene.add(plane);
+console.log(geometry);
 
 camera.position.x = 4;
 camera.position.y = 4;
@@ -91,37 +126,6 @@ window.addEventListener('resize', ()=>{
     camera.updateProjectionMatrix();
 });
 
-// // 监听按钮
-// let btn = document.createElement('button');
-// btn.innerHTML = 'click to full screen';
-// btn.style.position = 'absolute';
-// btn.style.top = '10px';
-// btn.style.left = '10px';
-// btn.style.zIndex = '999';
-// btn.addEventListener('click', (e) => {
-//     e.stopPropagation(); // 阻止事件冒泡给 OrbitControls
-//     e.preventDefault();
-//     document.body.requestFullscreen();  // 整个屏幕的追加事件
-//     // renderer.domElement.requestFullscreen();  // 画布追加事件
-//     console.log('full screen clicked');
-// });
-// document.body.appendChild(btn);
-
-
-// let exitBtn = document.createElement('button');
-// exitBtn.innerHTML = 'click to exit full screen';
-// exitBtn.style.position = 'absolute';
-// exitBtn.style.top = '10px';
-// exitBtn.style.left = '300px';
-// exitBtn.style.zIndex = '999';
-// exitBtn.addEventListener('click', (e) => {
-//     e.stopPropagation(); // 阻止事件冒泡给 OrbitControls
-//     e.preventDefault();
-//     document.exitFullscreen();  // body追加事件
-//     // renderer.domElement.exitFullscreen();  // 画布追加事件
-//     console.log('exit full screen');
-// });
-// document.body.appendChild(exitBtn);
 
 let eventObj = {
     fullScreen: function() {
@@ -141,24 +145,3 @@ const gui = new GUI();
 // 添加按钮
 gui.add(eventObj, 'fullScreen').name('全屏');
 gui.add(eventObj, 'exitFullScreen').name('退出全屏');
-
-// 控制立方体的位置
-// gui.add(cube.position, 'x', -5, 5).name('立方体x轴位置');
-
-// 创建一个管理folder
-let folder = gui.addFolder('立方体位置管理');
-folder.add(cube.position, 'x').min(-10).max(10).step(1).name('立方体x轴位置').onChange((val) => {
-    console.log('立方体x轴位置',val);
-});  // 调整x轴上位置,最小值-10,最大值10,每一次只滑动1
-folder.add(cube.position, 'y').min(-10).max(10).step(1).name('立方体y轴位置');
-folder.add(cube.position, 'z').min(-10).max(10).step(1).name('立方体z轴位置');
-
-gui.add(parentMaterial, 'wireframe').name('父元素线框材质');
-gui.add(material, 'wireframe').name('子元素线框材质');
-
-let colorParms = {
-    cubeColor: '#ff000',
-};
-gui.addColor(colorParms, 'cubeColor').name('立方体颜色').onChange((val => {
-    cube.material.color.set(val);
-}));
